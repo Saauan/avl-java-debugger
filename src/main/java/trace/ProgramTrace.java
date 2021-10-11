@@ -1,10 +1,12 @@
 package trace;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class ProgramTrace {
-	private final List<Trace> traces;
+	public final List<Trace> traces;
 	private int currentTraceIndex;
 	public static final ProgramTrace INSTANCE = new ProgramTrace();
 
@@ -21,8 +23,16 @@ public class ProgramTrace {
 		return traces.get(currentTraceIndex++);
 	}
 
+	public boolean hasNext() {
+		return currentTraceIndex < traces.size();
+	}
+
 	public Trace previous() {
 		return traces.get(--currentTraceIndex);
+	}
+
+	public boolean hasPrevious() {
+		return currentTraceIndex > 0;
 	}
 
 	public void printTraces() {
@@ -30,6 +40,4 @@ public class ProgramTrace {
 			System.out.println(trace.toString());
 		}
 	}
-
-
 }

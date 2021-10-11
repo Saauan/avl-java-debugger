@@ -65,22 +65,27 @@ public class Debugger {
 			}
 		}
 		ProgramTrace.INSTANCE.printTraces();
+		TraceNavigator traceNavigator = new TraceNavigator();
+		traceNavigator.navigate(ProgramTrace.INSTANCE);
 	}
 
 	@SneakyThrows
-	private Trace getTrace(LocatableEvent event) {
-		List<Trace.Variable> variables = new ArrayList<>();
+	protected Trace getTrace(LocatableEvent event) {
+		List<Variable> variables = new ArrayList<>();
 		List<LocalVariable> localVariables = event.location().method().variables();
 		var stack = event.thread().frame(0);
-		for (LocalVariable variable: localVariables) {
-				if(stack.visibleVariables().contains(variable)) {
-					variables.add(new Trace.Variable(variable.name(), stack.getValue(variable)));
-				}
+		for (LocalVariable variable: stack.visibleVariables()) {
+					variables.add(new Variable(variable.name(), stack.getValue(variable)));
 		}
-		return new Trace(LocalDateTime.now(), event.location().method().name(), event.location().sourcePath(), event.location().lineNumber(), variables);
+		List<Frame> frames = new ArrayList<>();
+		var stackFrames = event.thread().frames();
+		stackFrames.forEach(it -> {
+			frames.add(new Frame(it.location().method().name(), it.location().lineNumber()));
+		});
+		return new Trace(LocalDateTime.now(), event.location().method().name(), event.location().sourcePath(), event.location().lineNumber(), variables, frames);
 	}
 
-	private void handleStepEvent(StepEvent event, StepEvent stepEvent)
+	protected void handleStepEvent(StepEvent event, StepEvent stepEvent)
 			throws AbsentInformationException, IncompatibleThreadStateException {
 		//					event.request().disable();
 		printLineInfo(event, stepEvent);
@@ -88,12 +93,12 @@ public class Debugger {
 		ProgramTrace.INSTANCE.log(getTrace(event));
 	}
 
-	private void handleBreakPoint(BreakpointEvent event) {
+	protected void handleBreakPoint(BreakpointEvent event) {
 		System.out.println("Breakpoint");
 		ProgramTrace.INSTANCE.log(getTrace(event));
 	}
 
-	private void createStepRequest(ThreadReference thread) {
+	protected void createStepRequest(ThreadReference thread) {
 		if(vm.eventRequestManager().stepRequests().isEmpty()) {
 			StepRequest stepRequest = vm.eventRequestManager().createStepRequest(thread,
 					StepRequest.STEP_LINE, StepRequest.STEP_OVER);
@@ -101,20 +106,20 @@ public class Debugger {
 		}
 	}
 
-	private void initBreakPoints() throws AbsentInformationException {
+	protected void initBreakPoints() throws AbsentInformationException {
 		SetBreakpointDebugCommand setBPCommand = new SetBreakpointDebugCommand();
 		setBPCommand.setBreakPoint(MyMain.class.getName(), 9);
 		setBPCommand.setBreakPoint(MyMain.class.getName(), 27);
 	}
 
-	private void printStackTrace(StepEvent event) throws IncompatibleThreadStateException {
+	protected void printStackTrace(StepEvent event) throws IncompatibleThreadStateException {
 		for(StackFrame frame : event.thread().frames()) {
 			System.out.printf("%s %d|", frame.location().method(), frame.location().lineNumber());
 		}
 		System.out.println();
 	}
 
-	private void printLineInfo(StepEvent event, StepEvent stepEvent)
+	protected void printLineInfo(StepEvent event, StepEvent stepEvent)
 			throws AbsentInformationException, IncompatibleThreadStateException {
 		Location location = stepEvent.location();
 		String fileName = location.sourcePath();

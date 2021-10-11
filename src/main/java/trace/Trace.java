@@ -1,9 +1,7 @@
 package trace;
 
-import com.sun.jdi.LocalVariable;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -16,12 +14,6 @@ public class Trace {
 	String sourcePath;
 	int lineNumber;
 	List<Variable> variables;
+	List<Frame> frames;
 
-	@AllArgsConstructor
-	@Data
-	static
-	class Variable {
-		String name;
-		Object value;
-	}
 }
