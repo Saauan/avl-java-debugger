@@ -17,4 +17,8 @@ public class FrameCommand  implements Command{
 	public String argumentsDescription() {
 		return null;
 	}
+
+	public Boolean isOnPlace() {
+		throw new UnsupportedOperationException("Not implemented");
+	}
 }

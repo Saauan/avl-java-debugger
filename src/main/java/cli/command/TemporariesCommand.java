@@ -17,4 +17,8 @@ public class TemporariesCommand implements Command {
 	public String argumentsDescription() {
 		return null;
 	}
+
+	public Boolean isOnPlace() {
+		throw new UnsupportedOperationException("Not implemented");
+	}
 }

@@ -6,4 +6,5 @@ public interface Command {
 	void execute(List<String> args);
 	Integer argumentsNeeded();
 	String argumentsDescription();
+	Boolean isOnPlace();
 }

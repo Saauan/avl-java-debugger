@@ -12,11 +12,11 @@ public class CliCommander implements Commander {
 	private final TextIO textIO = TextIoFactory.getTextIO();
 	private Map<String, Command> commands;
 
-	public CliCommander(VirtualMachine vm) {
-		initCommands(vm);
+	public CliCommander() {
+		initCommands();
 	}
 
-	private void initCommands(VirtualMachine vm) {
+	private void initCommands() {
 		commands = Map.ofEntries(
 				Map.entry("step", new StepCommand()),
 				Map.entry("step-over", new StepOverCommand()),
@@ -39,26 +39,32 @@ public class CliCommander implements Commander {
 		);
 	}
 
-	public void requestCommand(VirtualMachine vm) {
-		boolean incorrect = true;
-		Command command = null;
-		while(incorrect) {
-			String userInput = textIO.newStringInputReader().read("Enter a command :");
-			if(commands.containsKey(userInput)) {
-				incorrect = false;
-				command = commands.get(userInput);
-			} else {
-				textIO.getTextTerminal().println("This command is not valid !");
+	@Override
+	public void requestCommand(Context context) {
+		boolean resumeExecution = false;
+		while(!resumeExecution) {
+			boolean incorrect = true;
+			Command command = null;
+			while(incorrect) {
+				String userInput = textIO.newStringInputReader().read("Enter a command :");
+				if(commands.containsKey(userInput)) {
+					incorrect = false;
+					command = commands.get(userInput);
+				} else {
+					textIO.getTextTerminal().println("This command is not valid !");
+				}
 			}
-		}
 
-		List<String> arguments = new ArrayList<>();
-		if(command.argumentsNeeded() > 0) {
-			arguments = Arrays.stream(textIO.newStringInputReader()
-					.read("Enter all arguments separated by spaces : " + command.argumentsDescription())
-					.split(" ")).toList();
-		}
+			List<String> arguments = new ArrayList<>();
+			if(command.argumentsNeeded() > 0) {
+				arguments = Arrays.stream(textIO.newStringInputReader()
+						.read("Enter all arguments separated by spaces : " + command.argumentsDescription())
+						.split(" ")).toList();
+			}
 
-		command.execute(arguments);
+			command.execute(arguments);
+
+			resumeExecution = !command.isOnPlace();
+		}
 	}
 }

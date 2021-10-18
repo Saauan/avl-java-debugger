@@ -30,6 +30,8 @@ public class Debugger {
 
 		vm = launchingConnector.launch(arguments);
 
+		Commander commander = new CliCommander();
+
 		ClassPrepareRequest classPrepareRequest = vm.eventRequestManager().createClassPrepareRequest();
 		System.out.println(debugClass.getName());
 		classPrepareRequest.addClassFilter(debugClass.getName());
@@ -42,18 +44,20 @@ public class Debugger {
 			for (Event event : eventSet) {
 				System.out.println(event.toString());
 				if (event instanceof ClassPrepareEvent) {
-					initBreakPoints();
+					commander.requestCommand(new Context(((ClassPrepareEvent) event).thread(), vm));
 				}
 
 				if (event instanceof BreakpointEvent) {
-					handleBreakPoint((BreakpointEvent) event);
-					createStepRequest(((BreakpointEvent) event).thread());
+					commander.requestCommand(new Context(((BreakpointEvent) event).thread(), vm));
+//					handleBreakPoint((BreakpointEvent) event);
+//					<createStepRequest(((BreakpointEvent) event).thread());
 				}
 
 				if (event instanceof StepEvent stepEvent) {
-					if(!((StepEvent) event).location().sourcePath().equals("java\\lang\\Thread.java")) {
-						handleStepEvent((StepEvent) event, stepEvent);
-					}
+					commander.requestCommand(new Context(((StepEvent) event).thread(), vm));
+//					if(!((StepEvent) event).location().sourcePath().equals("java\\lang\\Thread.java")) {
+//						handleStepEvent((StepEvent) event, stepEvent);
+//					}
 				}
 
 				if (event instanceof VMDisconnectEvent) {
