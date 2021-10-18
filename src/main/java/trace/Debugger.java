@@ -10,13 +10,17 @@ import com.sun.jdi.request.BreakpointRequest;
 import com.sun.jdi.request.ClassPrepareRequest;
 import com.sun.jdi.request.StepRequest;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+@Slf4j
 public class Debugger {
 
 	VirtualMachine vm;
@@ -43,18 +47,21 @@ public class Debugger {
 		while (!stop && (eventSet = vm.eventQueue().remove()) != null) {
 			for (Event event : eventSet) {
 				System.out.println(event.toString());
-				if (event instanceof ClassPrepareEvent) {
-					commander.requestCommand(new Context(((ClassPrepareEvent) event).thread(), vm));
+				if (event instanceof ClassPrepareEvent classPrepareEvent) {
+					log.debug("Entering ClassPrepareEvent " + MyMain.class.getName());
+					commander.requestCommand(new Context(classPrepareEvent.thread(), vm));
 				}
 
-				if (event instanceof BreakpointEvent) {
-					commander.requestCommand(new Context(((BreakpointEvent) event).thread(), vm));
+				if (event instanceof BreakpointEvent breakpointEvent) {
+					log.debug("Entering BreakpointEvent");
+					commander.requestCommand(new Context(breakpointEvent.thread(), vm));
 //					handleBreakPoint((BreakpointEvent) event);
 //					<createStepRequest(((BreakpointEvent) event).thread());
 				}
 
 				if (event instanceof StepEvent stepEvent) {
-					commander.requestCommand(new Context(((StepEvent) event).thread(), vm));
+					log.debug("Entering StepEvent");
+					commander.requestCommand(new Context(stepEvent.thread(), vm));
 //					if(!((StepEvent) event).location().sourcePath().equals("java\\lang\\Thread.java")) {
 //						handleStepEvent((StepEvent) event, stepEvent);
 //					}

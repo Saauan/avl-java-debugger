@@ -1,12 +1,14 @@
 package trace;
 
 import cli.command.*;
-import com.sun.jdi.VirtualMachine;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.beryx.textio.TextIO;
 import org.beryx.textio.TextIoFactory;
 
 import java.util.*;
 
+@Slf4j
 public class CliCommander implements Commander {
 
 	private final TextIO textIO = TextIoFactory.getTextIO();
@@ -46,6 +48,7 @@ public class CliCommander implements Commander {
 			boolean incorrect = true;
 			Command command = null;
 			while(incorrect) {
+				log.debug("Reading user input...");
 				String userInput = textIO.newStringInputReader().read("Enter a command :");
 				if(commands.containsKey(userInput)) {
 					incorrect = false;
@@ -57,12 +60,13 @@ public class CliCommander implements Commander {
 
 			List<String> arguments = new ArrayList<>();
 			if(command.argumentsNeeded() > 0) {
+				log.debug("Reading user arguments...");
 				arguments = Arrays.stream(textIO.newStringInputReader()
 						.read("Enter all arguments separated by spaces : " + command.argumentsDescription())
 						.split(" ")).toList();
 			}
 
-			command.execute(arguments);
+			command.execute(arguments, context);
 
 			resumeExecution = !command.isOnPlace();
 		}

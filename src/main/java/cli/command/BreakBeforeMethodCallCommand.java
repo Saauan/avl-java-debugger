@@ -1,10 +1,12 @@
 package cli.command;
 
+import trace.Context;
+
 import java.util.List;
 
 public class BreakBeforeMethodCallCommand implements Command {
 	@Override
-	public void execute(List<String> args) {
+	public void execute(List<String> args, Context context) {
 
 	}
 
