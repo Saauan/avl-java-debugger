@@ -65,9 +65,14 @@ public class CliCommander implements Commander {
 						.split(" ")).toList();
 			}
 
-			command.execute(arguments, context, textIO);
+			try {
+				command.execute(arguments, context, textIO);
+				resumeExecution = !command.isOnPlace();
+			} catch (InvalidCommandException e) {
+				log.warn(e.getMessage());
+				textIO.getTextTerminal().println(e.getMessage());
+			}
 
-			resumeExecution = !command.isOnPlace();
 		}
 		log.debug("Resuming execution");
 	}

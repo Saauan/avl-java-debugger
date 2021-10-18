@@ -24,14 +24,22 @@ public class BreakCommand implements Command {
 
 	protected void setBreakPoint(String className, int lineNumber, VirtualMachine vm, int hitCount) throws AbsentInformationException {
 		log.debug("Setting breakpoint for %s line %d with hit count %d".formatted(className, lineNumber, hitCount));
-		vm.allClasses().stream().filter(cl -> cl.name().equals(className)).forEach(
-				cl -> setBreakPointAtClass(lineNumber, vm, cl, hitCount)
-		);
+		vm.allClasses().stream().filter(cl -> cl.name().equals(className)).findFirst().ifPresentOrElse(
+				(cl -> setBreakPointAtClass(lineNumber, vm, cl, hitCount)),
+				this::classDoesNotExist);
+	}
+
+	private void classDoesNotExist() {
+		throw new InvalidCommandException("The class does not exist");
 	}
 
 	@SneakyThrows
 	protected void setBreakPointAtClass(int lineNumber, VirtualMachine vm, ReferenceType cl, int hitCount) {
-		Location location = cl.locationsOfLine(lineNumber).get(0);
+		List<Location> locations = cl.locationsOfLine(lineNumber);
+		if(locations.isEmpty()) {
+			throw new InvalidCommandException("The line you entered is not a valid line !");
+		}
+		Location location = locations.get(0);
 		BreakpointRequest bpReq = vm.eventRequestManager().createBreakpointRequest(location);
 		Debugger.BREAKPOINT_REFERENCES.add(new BreakpointReference(location, hitCount, bpReq));
 		bpReq.enable();
