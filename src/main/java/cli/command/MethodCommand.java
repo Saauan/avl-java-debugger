@@ -1,26 +1,29 @@
 package cli.command;
 
+import lombok.SneakyThrows;
+import org.beryx.textio.TextIO;
 import trace.Context;
 
 import java.util.List;
 
 public class MethodCommand implements Command {
 	@Override
-	public void execute(List<String> args, Context context) {
-
+	@SneakyThrows
+	public void execute(List<String> args, Context context, TextIO textIo) {
+		textIo.getTextTerminal().println(context.threadReference().frame(0).location().method().name());
 	}
 
 	@Override
 	public Integer argumentsNeeded() {
-		return null;
+		return 0;
 	}
 
 	@Override
 	public String argumentsDescription() {
-		return null;
+		return "";
 	}
 
 	public Boolean isOnPlace() {
-		throw new UnsupportedOperationException("Not implemented");
+		return true;
 	}
 }

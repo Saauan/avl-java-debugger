@@ -1,26 +1,34 @@
 package cli.command;
 
+import com.sun.jdi.Field;
+import com.sun.jdi.ReferenceType;
+import lombok.SneakyThrows;
+import org.beryx.textio.TextIO;
 import trace.Context;
 
 import java.util.List;
 
 public class ReceiverVariablesCommand implements Command {
 	@Override
-	public void execute(List<String> args, Context context) {
-
+	@SneakyThrows
+	public void execute(List<String> args, Context context, TextIO textIo) {
+		ReferenceType referenceType = context.threadReference().frame(0).location().declaringType();
+		for(Field field : referenceType.fields()){
+			textIo.getTextTerminal().println("Field %s : %s".formatted(field.name(), referenceType.getValue(field)));
+		}
 	}
 
 	@Override
 	public Integer argumentsNeeded() {
-		return null;
+		return 0;
 	}
 
 	@Override
 	public String argumentsDescription() {
-		return null;
+		return "";
 	}
 
 	public Boolean isOnPlace() {
-		throw new UnsupportedOperationException("Not implemented");
+		return true;
 	}
 }

@@ -1,7 +1,6 @@
 package trace;
 
 import cli.command.*;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.beryx.textio.TextIO;
 import org.beryx.textio.TextIoFactory;
@@ -66,7 +65,7 @@ public class CliCommander implements Commander {
 						.split(" ")).toList();
 			}
 
-			command.execute(arguments, context);
+			command.execute(arguments, context, textIO);
 
 			resumeExecution = !command.isOnPlace();
 		}

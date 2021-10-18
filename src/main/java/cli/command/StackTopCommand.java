@@ -1,12 +1,13 @@
 package cli.command;
 
+import org.beryx.textio.TextIO;
 import trace.Context;
 
 import java.util.List;
 
 public class StackTopCommand implements Command {
 	@Override
-	public void execute(List<String> args, Context context) {
+	public void execute(List<String> args, Context context, TextIO textIo) {
 
 	}
 

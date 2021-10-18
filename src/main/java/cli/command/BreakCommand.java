@@ -7,8 +7,8 @@ import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.request.BreakpointRequest;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.beryx.textio.TextIO;
 import trace.Context;
-import trace.Debugger;
 
 import java.util.List;
 
@@ -16,7 +16,7 @@ import java.util.List;
 public class BreakCommand implements Command {
 	@Override
 	@SneakyThrows
-	public void execute(List<String> args, Context context) {
+	public void execute(List<String> args, Context context, TextIO textIo) {
 		setBreakPoint(args.get(0), Integer.parseInt(args.get(1)), context.vm());
 	}
 
