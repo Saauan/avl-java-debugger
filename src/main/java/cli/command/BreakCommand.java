@@ -8,7 +8,9 @@ import com.sun.jdi.request.BreakpointRequest;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.beryx.textio.TextIO;
+import trace.BreakpointReference;
 import trace.Context;
+import trace.Debugger;
 
 import java.util.List;
 
@@ -17,20 +19,21 @@ public class BreakCommand implements Command {
 	@Override
 	@SneakyThrows
 	public void execute(List<String> args, Context context, TextIO textIo) {
-		setBreakPoint(args.get(0), Integer.parseInt(args.get(1)), context.vm());
+		setBreakPoint(args.get(0), Integer.parseInt(args.get(1)), context.vm(), -1);
 	}
 
-	private void setBreakPoint(String className, int lineNumber, VirtualMachine vm) throws AbsentInformationException {
-		log.debug("Setting breakpoint for %s line %d".formatted(className, lineNumber));
+	protected void setBreakPoint(String className, int lineNumber, VirtualMachine vm, int hitCount) throws AbsentInformationException {
+		log.debug("Setting breakpoint for %s line %d with hit count %d".formatted(className, lineNumber, hitCount));
 		vm.allClasses().stream().filter(cl -> cl.name().equals(className)).forEach(
-				cl -> setBreakPointAtClass(lineNumber, vm, cl)
+				cl -> setBreakPointAtClass(lineNumber, vm, cl, hitCount)
 		);
 	}
 
 	@SneakyThrows
-	private void setBreakPointAtClass(int lineNumber, VirtualMachine vm, ReferenceType cl) {
+	protected void setBreakPointAtClass(int lineNumber, VirtualMachine vm, ReferenceType cl, int hitCount) {
 		Location location = cl.locationsOfLine(lineNumber).get(0);
 		BreakpointRequest bpReq = vm.eventRequestManager().createBreakpointRequest(location);
+		Debugger.BREAKPOINT_REFERENCES.add(new BreakpointReference(location, hitCount, bpReq));
 		bpReq.enable();
 	}
 

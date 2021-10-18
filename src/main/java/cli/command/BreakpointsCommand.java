@@ -12,7 +12,7 @@ public class BreakpointsCommand  implements Command{
 	@SneakyThrows
 	public void execute(List<String> args, Context context, TextIO textIo) {
 		for(BreakpointRequest req : context.vm().eventRequestManager().breakpointRequests()) {
-			textIo.getTextTerminal().println("Breakpoint at line %d in %s".formatted(req.location().lineNumber(), req.location().sourceName()));
+			textIo.getTextTerminal().println("Breakpoint at line %d in %s, enabled : %b".formatted(req.location().lineNumber(), req.location().sourceName(), req.isEnabled()));
 		}
 	}
 

@@ -1,27 +1,36 @@
 package cli.command;
 
+import com.sun.jdi.AbsentInformationException;
+import com.sun.jdi.Location;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.VirtualMachine;
+import com.sun.jdi.request.BreakpointRequest;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.beryx.textio.TextIO;
 import trace.Context;
 
 import java.util.List;
 
-public class BreakOnCountCommand  implements Command{
+@Slf4j
+public class BreakOnCountCommand extends BreakCommand implements Command{
 	@Override
+	@SneakyThrows
 	public void execute(List<String> args, Context context, TextIO textIo) {
-
+		setBreakPoint(args.get(0), Integer.parseInt(args.get(1)), context.vm(), Integer.parseInt(args.get(2)));
 	}
 
 	@Override
 	public Integer argumentsNeeded() {
-		return null;
+		return 3;
 	}
 
 	@Override
 	public String argumentsDescription() {
-		return null;
+		return "String className, int lineNumber, int count";
 	}
 
 	public Boolean isOnPlace() {
-		throw new UnsupportedOperationException("Not implemented");
+		return true;
 	}
 }

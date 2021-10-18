@@ -17,13 +17,19 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.function.Consumer;
 
 @Slf4j
 public class Debugger {
 
+	public static final List<BreakpointReference> BREAKPOINT_REFERENCES = new ArrayList<>();
+	public static final List<MethodEntryReference> METHOD_ENTRY_REFERENCES = new ArrayList<>();
 	VirtualMachine vm;
+
+	public static void main(String[] args)
+			throws IllegalConnectorArgumentsException, VMStartException, IOException, InterruptedException, AbsentInformationException, IncompatibleThreadStateException {
+		new Debugger().main();
+	}
 
 	@SneakyThrows
 	private void main() {
@@ -54,17 +60,30 @@ public class Debugger {
 
 				if (event instanceof BreakpointEvent breakpointEvent) {
 					log.debug("Entering BreakpointEvent");
+					BREAKPOINT_REFERENCES.stream().filter(ref -> ref.getLocation().equals(breakpointEvent.location()))
+							.findAny()
+							.ifPresentOrElse(
+									decrementOrRemoveBreakpointRef(),
+									() -> log.debug("No breakpoint ref found"));
 					commander.requestCommand(new Context(breakpointEvent.thread(), vm));
-//					handleBreakPoint((BreakpointEvent) event);
-//					<createStepRequest(((BreakpointEvent) event).thread());
 				}
 
 				if (event instanceof StepEvent stepEvent) {
 					log.debug("Entering StepEvent");
+					stepEvent.request().disable();
 					commander.requestCommand(new Context(stepEvent.thread(), vm));
-//					if(!((StepEvent) event).location().sourcePath().equals("java\\lang\\Thread.java")) {
-//						handleStepEvent((StepEvent) event, stepEvent);
-//					}
+				}
+
+				if (event instanceof MethodEntryEvent methodEntryEvent) {
+					log.debug("Entering MethodEntryEvent");
+					METHOD_ENTRY_REFERENCES.stream()
+							.filter(ref -> ref.getMethod().equals(methodEntryEvent.location().method()))
+							.findFirst().ifPresentOrElse(
+									ref -> commander.requestCommand(new Context(methodEntryEvent.thread(), vm)),
+									() -> log.debug("Not correct method")
+							);
+
+
 				}
 
 				if (event instanceof VMDisconnectEvent) {
@@ -78,20 +97,35 @@ public class Debugger {
 		ProgramTrace.INSTANCE.printTraces();
 	}
 
+	private Consumer<BreakpointReference> decrementOrRemoveBreakpointRef() {
+		return ref -> {
+			log.debug("Decrementing reference %s".formatted(ref));
+			if (ref.getHitsRemaining() > 0) {
+				ref.setHitsRemaining(ref.getHitsRemaining() - 1);
+			}
+			if (ref.getHitsRemaining() == 0) {
+				log.debug("Removing reference %s".formatted(ref));
+				BREAKPOINT_REFERENCES.remove(ref);
+				ref.getRequest().disable();
+			}
+		};
+	}
+
 	@SneakyThrows
 	protected Trace getTrace(LocatableEvent event) {
 		List<Variable> variables = new ArrayList<>();
 		List<LocalVariable> localVariables = event.location().method().variables();
 		var stack = event.thread().frame(0);
-		for (LocalVariable variable: stack.visibleVariables()) {
-					variables.add(new Variable(variable.name(), stack.getValue(variable)));
+		for (LocalVariable variable : stack.visibleVariables()) {
+			variables.add(new Variable(variable.name(), stack.getValue(variable)));
 		}
 		List<Frame> frames = new ArrayList<>();
 		var stackFrames = event.thread().frames();
 		stackFrames.forEach(it -> {
 			frames.add(new Frame(it.location().method().name(), it.location().lineNumber()));
 		});
-		return new Trace(LocalDateTime.now(), event.location().method().name(), event.location().sourcePath(), event.location().lineNumber(), variables, frames);
+		return new Trace(LocalDateTime.now(), event.location().method().name(), event.location().sourcePath(),
+				event.location().lineNumber(), variables, frames);
 	}
 
 	protected void handleStepEvent(StepEvent event, StepEvent stepEvent)
@@ -108,7 +142,7 @@ public class Debugger {
 	}
 
 	protected void createStepRequest(ThreadReference thread) {
-		if(vm.eventRequestManager().stepRequests().isEmpty()) {
+		if (vm.eventRequestManager().stepRequests().isEmpty()) {
 			StepRequest stepRequest = vm.eventRequestManager().createStepRequest(thread,
 					StepRequest.STEP_LINE, StepRequest.STEP_OVER);
 			stepRequest.enable();
@@ -122,7 +156,7 @@ public class Debugger {
 	}
 
 	protected void printStackTrace(StepEvent event) throws IncompatibleThreadStateException {
-		for(StackFrame frame : event.thread().frames()) {
+		for (StackFrame frame : event.thread().frames()) {
 			System.out.printf("%s %d|", frame.location().method(), frame.location().lineNumber());
 		}
 		System.out.println();
@@ -141,7 +175,7 @@ public class Debugger {
 		var stack = event.thread().frame(0);
 		variables.forEach(it -> {
 			try {
-				if(stack.visibleVariables().contains(it)) {
+				if (stack.visibleVariables().contains(it)) {
 					System.out.println("Value of %s : %s".formatted(it.name(), stack.getValue(it)));
 				}
 			} catch (AbsentInformationException e) {
@@ -149,11 +183,6 @@ public class Debugger {
 			}
 		});
 		System.out.println(msg);
-	}
-
-	public static void main(String[] args)
-			throws IllegalConnectorArgumentsException, VMStartException, IOException, InterruptedException, AbsentInformationException, IncompatibleThreadStateException {
-		new Debugger().main();
 	}
 
 	class SetBreakpointDebugCommand {

@@ -69,5 +69,6 @@ public class CliCommander implements Commander {
 
 			resumeExecution = !command.isOnPlace();
 		}
+		log.debug("Resuming execution");
 	}
 }
