@@ -21,8 +21,8 @@ public class Debugger {
 
 	VirtualMachine vm;
 
-	private void main()
-			throws IOException, IllegalConnectorArgumentsException, VMStartException, InterruptedException, AbsentInformationException, IncompatibleThreadStateException {
+	@SneakyThrows
+	private void main() {
 		LaunchingConnector launchingConnector = Bootstrap.virtualMachineManager().defaultConnector();
 		Map<String, Connector.Argument> arguments = launchingConnector.defaultArguments();
 		Class<MyMain> debugClass = MyMain.class;
@@ -65,8 +65,6 @@ public class Debugger {
 			}
 		}
 		ProgramTrace.INSTANCE.printTraces();
-		TraceNavigator traceNavigator = new TraceNavigator();
-		traceNavigator.navigate(ProgramTrace.INSTANCE);
 	}
 
 	@SneakyThrows
