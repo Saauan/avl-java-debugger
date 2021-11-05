@@ -21,11 +21,13 @@ public class BreakBeforeMethodCallCommand implements Command {
 	@Override
 	@SneakyThrows
 	public void execute(List<String> args, Context context, TextIO textIo) {
-		setBreakPoint(args.get(0), args.get(1), context.vm());
+		setBreakPoint(args.get(0), args.get(1), context.vm(), textIo);
 	}
 
-	protected void setBreakPoint(String methodName, String className, VirtualMachine vm) throws AbsentInformationException {
-		log.debug("Setting break point before method call for %s".formatted(methodName));
+	protected void setBreakPoint(String methodName, String className, VirtualMachine vm, TextIO textIO) throws AbsentInformationException {
+		String msg = "Setting break point before method call for %s".formatted(methodName);
+		textIO.getTextTerminal().println(msg);
+		log.debug(msg);
 		vm.allClasses().stream().filter(cl -> cl.name().equals(className)).forEach(
 				cl -> setBreakPointAtClass(vm, cl, methodName)
 		);

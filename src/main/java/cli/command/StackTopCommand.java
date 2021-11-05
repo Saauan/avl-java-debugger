@@ -8,7 +8,7 @@ import java.util.List;
 public class StackTopCommand implements Command {
 	@Override
 	public void execute(List<String> args, Context context, TextIO textIo) {
-
+		throw new UnsupportedOperationException("Not implemented");
 	}
 
 	@Override

@@ -10,7 +10,7 @@ public class BreakOnceCommand extends BreakCommand implements Command{
 	@Override
 	@SneakyThrows
 	public void execute(List<String> args, Context context, TextIO textIo) {
-		setBreakPoint(args.get(0), Integer.parseInt(args.get(1)), context.vm(), 1);
+		setBreakPoint(args.get(0), Integer.parseInt(args.get(1)), context.vm(), 1, textIo);
 	}
 
 	@Override

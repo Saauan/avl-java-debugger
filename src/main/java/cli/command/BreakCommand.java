@@ -19,11 +19,15 @@ public class BreakCommand implements Command {
 	@Override
 	@SneakyThrows
 	public void execute(List<String> args, Context context, TextIO textIo) {
-		setBreakPoint(args.get(0), Integer.parseInt(args.get(1)), context.vm(), -1);
+		setBreakPoint(args.get(0), Integer.parseInt(args.get(1)), context.vm(), -1, textIo);
 	}
 
-	protected void setBreakPoint(String className, int lineNumber, VirtualMachine vm, int hitCount) throws AbsentInformationException {
-		log.debug("Setting breakpoint for %s line %d with hit count %d".formatted(className, lineNumber, hitCount));
+	protected void setBreakPoint(String className, int lineNumber, VirtualMachine vm, int hitCount,
+								 TextIO textIO) throws AbsentInformationException {
+		String msg = "Setting breakpoint for %s line %d with hit count %d".formatted(className, lineNumber,
+				hitCount);
+		log.debug(msg);
+		textIO.getTextTerminal().println(msg);
 		vm.allClasses().stream().filter(cl -> cl.name().equals(className)).findFirst().ifPresentOrElse(
 				(cl -> setBreakPointAtClass(lineNumber, vm, cl, hitCount)),
 				this::classDoesNotExist);
