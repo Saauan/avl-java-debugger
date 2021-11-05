@@ -7,7 +7,9 @@ import java.util.List;
 
 public class ContinueCommand  implements Command{
 	@Override
-	public void execute(List<String> args, Context context, TextIO textIo) {}
+	public void execute(List<String> args, Context context, TextIO textIo) {
+		textIo.getTextTerminal().println("Continue...");
+	}
 
 	@Override
 	public Integer argumentsNeeded() {

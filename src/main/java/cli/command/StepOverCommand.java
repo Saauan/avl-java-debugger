@@ -13,6 +13,7 @@ public class StepOverCommand implements Command {
 		StepRequest stepRequest = context.vm().eventRequestManager().createStepRequest(context.threadReference(),
 				StepRequest.STEP_LINE, StepRequest.STEP_OVER);
 		stepRequest.enable();
+		textIo.getTextTerminal().println("Stepping over...");
 	}
 
 	@Override
