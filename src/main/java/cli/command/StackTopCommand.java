@@ -8,17 +8,17 @@ import java.util.List;
 public class StackTopCommand implements Command {
 	@Override
 	public void execute(List<String> args, Context context, TextIO textIo) {
-		throw new UnsupportedOperationException("Not implemented");
+		throw new InvalidCommandException("This command is not implemented");
 	}
 
 	@Override
 	public Integer argumentsNeeded() {
-		return null;
+		return 0;
 	}
 
 	@Override
 	public String argumentsDescription() {
-		return null;
+		return "";
 	}
 
 	public Boolean isOnPlace() {

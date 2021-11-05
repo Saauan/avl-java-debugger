@@ -42,6 +42,9 @@ public class FrameCommand  implements Command{
 	@SneakyThrows
 	private void printTraceAndSource(TextIO textIO, String sourcePath, int lineNumber) {
 		File source = new File("../../src/main/java/" + sourcePath);
+		if(!source.exists()) {
+			throw new InvalidCommandException("Cannot use frame on a library class");
+		}
 		var lines = Files.readAllLines(source.toPath());
 		for (String line : lines.subList(getMinLine(lineNumber), getMaxLine(lineNumber, lines.size()))) {
 			textIO.getTextTerminal().println(line);

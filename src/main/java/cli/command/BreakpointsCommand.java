@@ -11,9 +11,15 @@ public class BreakpointsCommand  implements Command{
 	@Override
 	@SneakyThrows
 	public void execute(List<String> args, Context context, TextIO textIo) {
-		for(BreakpointRequest req : context.vm().eventRequestManager().breakpointRequests()) {
-			textIo.getTextTerminal().println("Breakpoint at line %d in %s, enabled : %b".formatted(req.location().lineNumber(), req.location().sourceName(), req.isEnabled()));
+		List<BreakpointRequest> breakpoints = context.vm().eventRequestManager().breakpointRequests();
+		if(breakpoints.isEmpty()) {
+			textIo.getTextTerminal().println("There is no breakpoint.");
+		} else {
+			for(BreakpointRequest req : breakpoints) {
+				textIo.getTextTerminal().println("Breakpoint at line %d in %s, enabled : %b".formatted(req.location().lineNumber(), req.location().sourceName(), req.isEnabled()));
+			}
 		}
+
 	}
 
 	@Override

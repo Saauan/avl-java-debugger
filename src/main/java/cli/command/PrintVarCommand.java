@@ -1,5 +1,6 @@
 package cli.command;
 
+import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.StackFrame;
 import lombok.SneakyThrows;
 import org.beryx.textio.TextIO;
@@ -13,7 +14,11 @@ public class PrintVarCommand  implements Command{
 	public void execute(List<String> args, Context context, TextIO textIo) {
 		String varName = args.get(0);
 		StackFrame frame = context.threadReference().frame(0);
-		textIo.getTextTerminal().println(frame.getValue(frame.visibleVariableByName(varName)).toString());
+		try {
+			textIo.getTextTerminal().println(frame.getValue(frame.visibleVariableByName(varName)).toString());
+		} catch (AbsentInformationException e) {
+			throw new InvalidCommandException("This variable does not exists");
+		}
 	}
 
 	@Override
