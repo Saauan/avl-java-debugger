@@ -14,8 +14,13 @@ public class PrintVarCommand  implements Command{
 	public void execute(List<String> args, Context context, TextIO textIo) {
 		String varName = args.get(0);
 		StackFrame frame = context.threadReference().frame(0);
+		textIo.getTextTerminal().println(getVariableValue(varName, frame));
+
+	}
+
+	private String getVariableValue(String varName, StackFrame frame) throws AbsentInformationException {
 		try {
-			textIo.getTextTerminal().println(frame.getValue(frame.visibleVariableByName(varName)).toString());
+			return frame.getValue(frame.visibleVariableByName(varName)).toString();
 		} catch (AbsentInformationException e) {
 			throw new InvalidCommandException("This variable does not exists");
 		}

@@ -10,10 +10,14 @@ public class StepOverCommand implements Command {
 	@Override
 	public void execute(List<String> args, Context context, TextIO textIo) {
 		assert context.vm().eventRequestManager().stepRequests().isEmpty() : "There is already a step request !";
-		StepRequest stepRequest = context.vm().eventRequestManager().createStepRequest(context.threadReference(),
-				StepRequest.STEP_LINE, StepRequest.STEP_OVER);
+		StepRequest stepRequest = createStepRequest(context);
 		stepRequest.enable();
 		textIo.getTextTerminal().println("Stepping over...");
+	}
+
+	private StepRequest createStepRequest(Context context) {
+		return context.vm().eventRequestManager()
+				.createStepRequest(context.threadReference(), StepRequest.STEP_LINE, StepRequest.STEP_OVER);
 	}
 
 	@Override

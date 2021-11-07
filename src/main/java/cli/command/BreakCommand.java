@@ -23,14 +23,18 @@ public class BreakCommand implements Command {
 	}
 
 	protected void setBreakPoint(String className, int lineNumber, VirtualMachine vm, int hitCount,
-								 TextIO textIO) throws AbsentInformationException {
+								 TextIO textIO) {
 		String msg = "Setting breakpoint for %s line %d with hit count %d".formatted(className, lineNumber,
 				hitCount);
 		log.debug(msg);
 		textIO.getTextTerminal().println(msg);
-		vm.allClasses().stream().filter(cl -> cl.name().equals(className)).findFirst().ifPresentOrElse(
-				(cl -> setBreakPointAtClass(lineNumber, vm, cl, hitCount)),
-				this::classDoesNotExist);
+		vm.allClasses().stream()
+				.filter(cl -> cl.name().equals(className))
+				.findFirst()
+				.ifPresentOrElse(
+						(cl -> setBreakPointAtClass(lineNumber, vm, cl, hitCount)),
+						this::classDoesNotExist
+				);
 	}
 
 	private void classDoesNotExist() {
@@ -39,14 +43,24 @@ public class BreakCommand implements Command {
 
 	@SneakyThrows
 	protected void setBreakPointAtClass(int lineNumber, VirtualMachine vm, ReferenceType cl, int hitCount) {
-		List<Location> locations = cl.locationsOfLine(lineNumber);
-		if(locations.isEmpty()) {
-			throw new InvalidCommandException("The line you entered is not a valid line !");
-		}
-		Location location = locations.get(0);
-		BreakpointRequest bpReq = vm.eventRequestManager().createBreakpointRequest(location);
-		Debugger.BREAKPOINT_REFERENCES.add(new BreakpointReference(location, hitCount, bpReq));
+		Location location = getLocationOfBreakpoint(lineNumber, cl);
+		BreakpointRequest bpReq = createRequest(vm, location);
+		Debugger.BREAKPOINT_REFERENCES.add(createReference(hitCount, location, bpReq));
 		bpReq.enable();
+	}
+
+	private BreakpointReference createReference(int hitCount, Location location, BreakpointRequest bpReq) {
+		return new BreakpointReference(location, hitCount, bpReq);
+	}
+
+	private BreakpointRequest createRequest(VirtualMachine vm, Location location) {
+		return vm.eventRequestManager().createBreakpointRequest(location);
+	}
+
+	private Location getLocationOfBreakpoint(int lineNumber, ReferenceType cl) throws AbsentInformationException {
+		List<Location> locations = cl.locationsOfLine(lineNumber);
+		if(locations.isEmpty()) throw new InvalidCommandException("The line you entered is not a valid line !");
+		return locations.get(0);
 	}
 
 	@Override

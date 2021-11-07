@@ -1,5 +1,6 @@
 package cli.command;
 
+import com.sun.jdi.IncompatibleThreadStateException;
 import lombok.SneakyThrows;
 import org.beryx.textio.TextIO;
 import trace.Context;
@@ -10,7 +11,11 @@ public class ReceiverCommand implements Command {
 	@SneakyThrows
 	@Override
 	public void execute(List<String> args, Context context, TextIO textIo) {
-		textIo.getTextTerminal().println(context.threadReference().frame(0).location().declaringType().name());
+		textIo.getTextTerminal().println(getReceiverName(context));
+	}
+
+	private String getReceiverName(Context context) throws IncompatibleThreadStateException {
+		return context.threadReference().frame(0).location().declaringType().name();
 	}
 
 	@Override

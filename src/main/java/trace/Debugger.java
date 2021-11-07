@@ -24,7 +24,8 @@ public class Debugger {
 
 	public static final List<BreakpointReference> BREAKPOINT_REFERENCES = new ArrayList<>();
 	public static final List<MethodEntryReference> METHOD_ENTRY_REFERENCES = new ArrayList<>();
-	VirtualMachine vm;
+	public VirtualMachine vm;
+	public Commander commander;
 
 	public static void main(String[] args)
 			throws IllegalConnectorArgumentsException, VMStartException, IOException, InterruptedException, AbsentInformationException, IncompatibleThreadStateException {
@@ -33,57 +34,27 @@ public class Debugger {
 
 	@SneakyThrows
 	private void main() {
-		LaunchingConnector launchingConnector = Bootstrap.virtualMachineManager().defaultConnector();
-		Map<String, Connector.Argument> arguments = launchingConnector.defaultArguments();
-		Class<MyMain> debugClass = MyMain.class;
-		arguments.get("main").setValue(debugClass.getName());
-
-		vm = launchingConnector.launch(arguments);
-
-		Commander commander = new CliCommander();
-
-		ClassPrepareRequest classPrepareRequest = vm.eventRequestManager().createClassPrepareRequest();
-		System.out.println(debugClass.getName());
-		classPrepareRequest.addClassFilter(debugClass.getName());
-		classPrepareRequest.enable();
-
-
+		prepareDebugger();
 		EventSet eventSet = null;
 		boolean stop = false;
-		while (!stop && (eventSet = vm.eventQueue().remove()) != null) {
+		while (!stop && ((eventSet = vm.eventQueue().remove()) != null)) {
 			for (Event event : eventSet) {
 				System.out.println(event.toString());
 				if (event instanceof ClassPrepareEvent classPrepareEvent) {
 					log.debug("Entering ClassPrepareEvent " + MyMain.class.getName());
-					commander.requestCommand(new Context(classPrepareEvent.thread(), vm));
+					commander.requestCommand(createContext(classPrepareEvent.thread()));
 				}
 
 				if (event instanceof BreakpointEvent breakpointEvent) {
-					log.debug("Entering BreakpointEvent");
-					BREAKPOINT_REFERENCES.stream().filter(ref -> ref.getLocation().equals(breakpointEvent.location()))
-							.findAny()
-							.ifPresentOrElse(
-									decrementOrRemoveBreakpointRef(),
-									() -> log.debug("No breakpoint ref found"));
-					commander.requestCommand(new Context(breakpointEvent.thread(), vm));
+					handleBreakEvent(commander, breakpointEvent);
 				}
 
 				if (event instanceof StepEvent stepEvent) {
-					log.debug("Entering StepEvent");
-					stepEvent.request().disable();
-					commander.requestCommand(new Context(stepEvent.thread(), vm));
+					handleStepEvent(commander, stepEvent);
 				}
 
 				if (event instanceof MethodEntryEvent methodEntryEvent) {
-					log.debug("Entering MethodEntryEvent");
-					METHOD_ENTRY_REFERENCES.stream()
-							.filter(ref -> ref.getMethod().equals(methodEntryEvent.location().method()))
-							.findFirst().ifPresentOrElse(
-									ref -> commander.requestCommand(new Context(methodEntryEvent.thread(), vm)),
-									() -> log.debug("Not correct method")
-							);
-
-
+					handleMethodEntryEvent(commander, methodEntryEvent);
 				}
 
 				if (event instanceof VMDisconnectEvent) {
@@ -96,84 +67,84 @@ public class Debugger {
 		}
 	}
 
+	private void prepareDebugger() throws IOException, IllegalConnectorArgumentsException, VMStartException {
+		LaunchingConnector launchingConnector = Bootstrap.virtualMachineManager().defaultConnector();
+		Map<String, Connector.Argument> arguments = launchingConnector.defaultArguments();
+		Class<MyMain> debugClass = MyMain.class;
+		arguments.get("main").setValue(debugClass.getName());
+
+		this.vm = launchingConnector.launch(arguments);
+
+		this.commander = new CliCommander();
+
+		ClassPrepareRequest classPrepareRequest = vm.eventRequestManager().createClassPrepareRequest();
+		System.out.println(debugClass.getName());
+		classPrepareRequest.addClassFilter(debugClass.getName());
+		classPrepareRequest.enable();
+	}
+
+	private void handleMethodEntryEvent(Commander commander, MethodEntryEvent methodEntryEvent) {
+		log.debug("Entering MethodEntryEvent");
+		METHOD_ENTRY_REFERENCES.stream()
+				.filter(ref -> methodsNamesAreEquals(methodEntryEvent, ref))
+				.findFirst().ifPresentOrElse(
+						ref -> commander.requestCommand(createContext(methodEntryEvent.thread())),
+						() -> log.debug("Not correct method")
+				);
+	}
+
+	private boolean methodsNamesAreEquals(MethodEntryEvent methodEntryEvent, MethodEntryReference ref) {
+		return ref.getMethod().equals(methodEntryEvent.location().method());
+	}
+
+	private void handleStepEvent(Commander commander, StepEvent stepEvent) {
+		log.debug("Entering StepEvent");
+		stepEvent.request().disable();
+		decrementBreakpointIfFound(stepEvent);
+		commander.requestCommand(createContext(stepEvent.thread()));
+	}
+
+	private void handleBreakEvent(Commander commander, BreakpointEvent breakpointEvent) {
+		log.debug("Entering BreakpointEvent");
+		decrementBreakpointIfFound(breakpointEvent);
+		commander.requestCommand(createContext(breakpointEvent.thread()));
+	}
+
+	private Context createContext(ThreadReference thread) {
+		return new Context(thread, vm);
+	}
+
+	private void decrementBreakpointIfFound(LocatableEvent locatableEvent) {
+		BREAKPOINT_REFERENCES.stream()
+				.filter(ref -> ref.getLocation().equals(locatableEvent.location()))
+				.findAny()
+				.ifPresentOrElse(
+						decrementOrRemoveBreakpointRef(),
+						() -> log.debug("No breakpoint ref found")
+				);
+	}
+
 	private Consumer<BreakpointReference> decrementOrRemoveBreakpointRef() {
-		return ref -> {
-			log.debug("Decrementing reference %s".formatted(ref));
-			if (ref.getHitsRemaining() > 0) {
-				ref.setHitsRemaining(ref.getHitsRemaining() - 1);
-			}
-			if (ref.getHitsRemaining() == 0) {
-				log.debug("Removing reference %s".formatted(ref));
-				BREAKPOINT_REFERENCES.remove(ref);
-				ref.getRequest().disable();
-			}
-		};
+		return this::decrementOrRemoveBreakpoint;
 	}
 
-	protected void handleStepEvent(StepEvent event, StepEvent stepEvent)
-			throws AbsentInformationException, IncompatibleThreadStateException {
-		//					event.request().disable();
-		printLineInfo(event, stepEvent);
-		printStackTrace(event);
-	}
-
-	protected void handleBreakPoint(BreakpointEvent event) {
-		System.out.println("Breakpoint");
-	}
-
-	protected void createStepRequest(ThreadReference thread) {
-		if (vm.eventRequestManager().stepRequests().isEmpty()) {
-			StepRequest stepRequest = vm.eventRequestManager().createStepRequest(thread,
-					StepRequest.STEP_LINE, StepRequest.STEP_OVER);
-			stepRequest.enable();
+	private void decrementOrRemoveBreakpoint(BreakpointReference ref) {
+		log.debug("Decrementing reference %s".formatted(ref));
+		if (ref.getHitsRemaining() > 0) {
+			decrementBreakpoint(ref);
+		}
+		if (ref.getHitsRemaining() == 0) {
+			removeBreakpoint(ref);
 		}
 	}
 
-	protected void initBreakPoints() throws AbsentInformationException {
-		SetBreakpointDebugCommand setBPCommand = new SetBreakpointDebugCommand();
-		setBPCommand.setBreakPoint(MyMain.class.getName(), 9);
-		setBPCommand.setBreakPoint(MyMain.class.getName(), 27);
+	private void decrementBreakpoint(BreakpointReference ref) {
+		ref.setHitsRemaining(ref.getHitsRemaining() - 1);
 	}
 
-	protected void printStackTrace(StepEvent event) throws IncompatibleThreadStateException {
-		for (StackFrame frame : event.thread().frames()) {
-			System.out.printf("%s %d|", frame.location().method(), frame.location().lineNumber());
-		}
-		System.out.println();
-	}
-
-	protected void printLineInfo(StepEvent event, StepEvent stepEvent)
-			throws AbsentInformationException, IncompatibleThreadStateException {
-		Location location = stepEvent.location();
-		String fileName = location.sourcePath();
-		String className = location.sourceName();
-		String methodName = location.method().name();
-		int lineNumber = location.lineNumber();
-		List<LocalVariable> variables = location.method().variables();
-		//					List<Object> values = variables.stream().map(LocalVariable::)
-		var msg = "%s %s %s %d %s".formatted(fileName, className, methodName, lineNumber, variables);
-		var stack = event.thread().frame(0);
-		variables.forEach(it -> {
-			try {
-				if (stack.visibleVariables().contains(it)) {
-					System.out.println("Value of %s : %s".formatted(it.name(), stack.getValue(it)));
-				}
-			} catch (AbsentInformationException e) {
-				throw new RuntimeException(e);
-			}
-		});
-		System.out.println(msg);
-	}
-
-	class SetBreakpointDebugCommand {
-		public void setBreakPoint(String className, int lineNumber) throws AbsentInformationException {
-			for (ReferenceType targetClass : vm.allClasses()) {
-				if (targetClass.name().equals(className)) {
-					Location location = targetClass.locationsOfLine(lineNumber).get(0);
-					BreakpointRequest bpReq = vm.eventRequestManager().createBreakpointRequest(location);
-					bpReq.enable();
-				}
-			}
-		}
+	private void removeBreakpoint(BreakpointReference ref) {
+		log.debug("Removing reference %s".formatted(ref));
+		BREAKPOINT_REFERENCES.remove(ref);
+		ref.getRequest().disable();
 	}
 }

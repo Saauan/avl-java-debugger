@@ -1,5 +1,6 @@
 package cli.command;
 
+import com.sun.jdi.Method;
 import com.sun.jdi.StackFrame;
 import lombok.SneakyThrows;
 import org.beryx.textio.TextIO;
@@ -11,9 +12,13 @@ public class StackCommand implements Command {
 	@SneakyThrows
 	@Override
 	public void execute(List<String> args, Context context, TextIO textIo) {
-		for(StackFrame frame : context.threadReference().frames()) {
-			textIo.getTextTerminal().println("%s %d|".formatted(frame.location().method(), frame.location().lineNumber()));
-		}
+		context.threadReference().frames().forEach(frame -> printFrame(textIo, frame));
+	}
+
+	private void printFrame(TextIO textIo, StackFrame frame) {
+		Method method = frame.location().method();
+		int lineNumber = frame.location().lineNumber();
+		textIo.getTextTerminal().println("%s %d|".formatted(method, lineNumber));
 	}
 
 	@Override
