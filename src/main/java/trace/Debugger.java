@@ -100,7 +100,6 @@ public class Debugger {
 	private void handleStepEvent(Commander commander, StepEvent stepEvent) {
 		log.debug("Entering StepEvent");
 		stepEvent.request().disable();
-		decrementBreakpointIfFound(stepEvent);
 		commander.requestCommand(createContext(stepEvent.thread()));
 	}
 
