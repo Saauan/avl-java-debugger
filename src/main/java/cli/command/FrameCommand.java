@@ -18,10 +18,13 @@ public class FrameCommand  implements Command{
 	@Override
 	public void execute(List<String> args, Context context, TextIO textIo) {
 		StackFrame frame = context.threadReference().frame(0);
-		var msg = "%s %d".formatted(frame.location().method(), frame.location().lineNumber()); // TODO
+		String methodName = MethodCommand.getMethodName(context);
+		int lineNumber = frame.location().lineNumber();
+		var msg = "%s %d".formatted(methodName, lineNumber);
+		textIo.getTextTerminal().println(msg);
+		TemporariesCommand.printVariables(textIo, frame);
 		Location location = context.threadReference().frame(0).location();
 		printTraceAndSource(textIo, location.sourcePath(), location.lineNumber());
-		textIo.getTextTerminal().println(msg);
 	}
 
 	@Override

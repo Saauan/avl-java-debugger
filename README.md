@@ -56,3 +56,11 @@ Cette commande ne fait absolument rien.
 
 Nous aurions pu implémenter cette commande, mais ça aurait signifié devoir tracker chaque return et chaque valeur renvoyée par un return, de manière récursive. Et ça aurait été ridiculeusement difficile. De plus `jdi` ne semble pas apporter de manière simple  de faire cela non plus.
 
+
+## Exemple d'execution
+
+![Exemple d'execution](./exec_sample.png)
+
+## Comment utiliser le projet
+
+Faire `mvn clean package` puis `java -jar ./target/TD3-1.0.jar`

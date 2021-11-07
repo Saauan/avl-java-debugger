@@ -14,7 +14,8 @@ public class MethodCommand implements Command {
 		textIo.getTextTerminal().println(getMethodName(context));
 	}
 
-	private String getMethodName(Context context) throws IncompatibleThreadStateException {
+	@SneakyThrows
+	public static String getMethodName(Context context) {
 		return context.threadReference().frame(0).location().method().name();
 	}
 

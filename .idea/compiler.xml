@@ -7,9 +7,12 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="TD2" />
-        <module name="TD3 - Projet" />
+        <module name="TD3" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="TD2" target="17" />
+      <module name="TD3" target="17" />
+    </bytecodeTargetLevel>
   </component>
 </project>

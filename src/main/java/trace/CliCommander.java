@@ -4,13 +4,17 @@ import cli.command.*;
 import lombok.extern.slf4j.Slf4j;
 import org.beryx.textio.TextIO;
 import org.beryx.textio.TextIoFactory;
+import org.beryx.textio.console.ConsoleTextTerminal;
+import org.beryx.textio.jline.JLineTextTerminal;
+import org.beryx.textio.swing.SwingTextTerminal;
+import org.beryx.textio.system.SystemTextTerminal;
 
 import java.util.*;
 
 @Slf4j
 public class CliCommander implements Commander {
 
-	private final TextIO textIO = TextIoFactory.getTextIO();
+	private final TextIO textIO = new TextIO(new SystemTextTerminal());
 	private Map<String, Command> commands;
 
 	public CliCommander() {
