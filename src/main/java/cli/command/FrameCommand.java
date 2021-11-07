@@ -5,7 +5,6 @@ import com.sun.jdi.StackFrame;
 import lombok.SneakyThrows;
 import org.beryx.textio.TextIO;
 import trace.Context;
-import trace.Trace;
 
 import java.io.File;
 import java.nio.file.Files;

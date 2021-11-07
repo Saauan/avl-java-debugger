@@ -94,7 +94,6 @@ public class Debugger {
 				vm.resume();
 			}
 		}
-		ProgramTrace.INSTANCE.printTraces();
 	}
 
 	private Consumer<BreakpointReference> decrementOrRemoveBreakpointRef() {
@@ -111,34 +110,15 @@ public class Debugger {
 		};
 	}
 
-	@SneakyThrows
-	protected Trace getTrace(LocatableEvent event) {
-		List<Variable> variables = new ArrayList<>();
-		List<LocalVariable> localVariables = event.location().method().variables();
-		var stack = event.thread().frame(0);
-		for (LocalVariable variable : stack.visibleVariables()) {
-			variables.add(new Variable(variable.name(), stack.getValue(variable)));
-		}
-		List<Frame> frames = new ArrayList<>();
-		var stackFrames = event.thread().frames();
-		stackFrames.forEach(it -> {
-			frames.add(new Frame(it.location().method().name(), it.location().lineNumber()));
-		});
-		return new Trace(LocalDateTime.now(), event.location().method().name(), event.location().sourcePath(),
-				event.location().lineNumber(), variables, frames);
-	}
-
 	protected void handleStepEvent(StepEvent event, StepEvent stepEvent)
 			throws AbsentInformationException, IncompatibleThreadStateException {
 		//					event.request().disable();
 		printLineInfo(event, stepEvent);
 		printStackTrace(event);
-		ProgramTrace.INSTANCE.log(getTrace(event));
 	}
 
 	protected void handleBreakPoint(BreakpointEvent event) {
 		System.out.println("Breakpoint");
-		ProgramTrace.INSTANCE.log(getTrace(event));
 	}
 
 	protected void createStepRequest(ThreadReference thread) {
